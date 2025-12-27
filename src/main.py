@@ -8,8 +8,14 @@ def main():
     dataset = Path("data/raw/queen7_7.col")
     g = load_dimacs_col(dataset)
 
-    n_colors = 9  # luego lo intentaremos bajar
-    params = GAParams(population_size=300, generations=1500, elitism=2, seed=0)
+    n_colors = 9
+    params = GAParams(
+        population_size=300,
+        generations=1500,
+        elitism=2,
+        seed=0,
+        patience=200,
+    )
 
     mutate = lambda ch: random_reset_mutation(ch, n_colors=n_colors, p_gene=0.02)
 
@@ -32,6 +38,8 @@ def main():
     print("Best colors used:", result["best_colors_used"])
     print("Best fitness:", result["best_fitness"])
     print("Best fitness (last gen):", result["history_best"][-1])
+    print("Stopped at generation:", result["stopped_generation"])
+    print("No-improve generations:", result["no_improve_generations"])
 
 if __name__ == "__main__":
     main()

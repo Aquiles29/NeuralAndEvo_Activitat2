@@ -17,6 +17,8 @@ class GAParams:
     generations: int = 300
     elitism: int = 2
     seed: int | None = 0
+    patience: int = 200  # parar si no mejora en N generaciones
+
 
 def run_ga(
     graph: Graph,
@@ -40,16 +42,28 @@ def run_ga(
     best_fit = float("inf")
     history_best: List[float] = []
 
-    for _gen in range(params.generations):
+    # estacionario
+    no_improve = 0
+    stopped_at = params.generations
+
+    for gen in range(params.generations):
         fits = [fitness(graph, ch, w_conflict=w_conflict, w_colors=w_colors) for ch in population]
 
-        # update global best
+        # update global best (minimización)
         best_idx = min(range(len(population)), key=lambda i: fits[i])
         if fits[best_idx] < best_fit:
             best_fit = fits[best_idx]
             best_ch = population[best_idx][:]
+            no_improve = 0
+        else:
+            no_improve += 1
 
         history_best.append(best_fit)
+
+        # stationary stop
+        if no_improve >= params.patience:
+            stopped_at = gen
+            break
 
         # elitism: carry best N from current population
         elite_idxs = sorted(range(len(population)), key=lambda i: fits[i])[: params.elitism]
@@ -79,4 +93,6 @@ def run_ga(
         "best_conflicts": best_eval.conflicts,
         "best_colors_used": best_eval.colors_used,
         "history_best": history_best,
+        "stopped_generation": stopped_at,
+        "no_improve_generations": no_improve,
     }
