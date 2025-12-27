@@ -2,13 +2,13 @@ from pathlib import Path
 
 from .datasets import load_dimacs_col
 from .ga.genetic_algorithm import run_ga, GAParams
-from .ga.operators import tournament_selection, one_point_crossover, random_reset_mutation
+from .ga.operators import roulette_selection, uniform_crossover, swap_mutation
 
 def main():
     dataset = Path("data/raw/queen7_7.col")
     g = load_dimacs_col(dataset)
 
-    n_colors = 9
+    n_colors = 8
     params = GAParams(
         population_size=300,
         generations=1500,
@@ -17,14 +17,12 @@ def main():
         patience=200,
     )
 
-    mutate = lambda ch: random_reset_mutation(ch, n_colors=n_colors, p_gene=0.02)
-
     result = run_ga(
         graph=g,
         n_colors=n_colors,
-        select_fn=lambda pop, fits: tournament_selection(pop, fits, k=3),
-        crossover_fn=lambda a, b: one_point_crossover(a, b, p=0.9),
-        mutate_fn=mutate,
+        select_fn=lambda pop, fits: roulette_selection(pop, fits),
+        crossover_fn=lambda a, b: uniform_crossover(a, b, p=0.9),
+        mutate_fn=lambda ch: swap_mutation(ch, p=0.3),
         params=params,
         w_conflict=1000.0,
         w_colors=1.0,
@@ -37,7 +35,6 @@ def main():
     print("Best conflicts:", result["best_conflicts"])
     print("Best colors used:", result["best_colors_used"])
     print("Best fitness:", result["best_fitness"])
-    print("Best fitness (last gen):", result["history_best"][-1])
     print("Stopped at generation:", result["stopped_generation"])
     print("No-improve generations:", result["no_improve_generations"])
 
