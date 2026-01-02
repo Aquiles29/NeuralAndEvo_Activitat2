@@ -8,7 +8,7 @@ def main():
     dataset = Path("data/raw/queen7_7.col")
     g = load_dimacs_col(dataset)
 
-    n_colors = 8
+    n_colors = 9
     params = GAParams(
         population_size=300,
         generations=1500,
@@ -17,7 +17,7 @@ def main():
         patience=200,
     )
 
-    result = run_ga(
+    res = run_ga(
         graph=g,
         n_colors=n_colors,
         select_fn=lambda pop, fits: roulette_selection(pop, fits),
@@ -29,14 +29,12 @@ def main():
     )
 
     print("Dataset:", dataset.name)
-    print("Vertices:", g.n_vertices)
-    print("Edges:", len(g.edges))
-    print("Allowed colors:", n_colors)
-    print("Best conflicts:", result["best_conflicts"])
-    print("Best colors used:", result["best_colors_used"])
-    print("Best fitness:", result["best_fitness"])
-    print("Stopped at generation:", result["stopped_generation"])
-    print("No-improve generations:", result["no_improve_generations"])
+    print("V:", g.n_vertices, "E:", len(g.edges))
+    print("k:", n_colors)
+    print("best_conflicts:", res["best_conflicts"])
+    print("best_colors_used:", res["best_colors_used"])
+    print("best_fitness:", res["best_fitness"])
+    print("stopped_generation:", res["stopped_generation"])
 
 if __name__ == "__main__":
     main()

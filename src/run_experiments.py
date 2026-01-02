@@ -1,11 +1,12 @@
 from __future__ import annotations
 from pathlib import Path
 import csv
+import argparse
 from typing import Callable, Dict, Any, List, Tuple
 
-from src.datasets import load_dimacs_col
-from src.ga.genetic_algorithm import run_ga, GAParams
-from src.ga.operators import (
+from .datasets import load_dimacs_col
+from .ga.genetic_algorithm import run_ga, GAParams
+from .ga.operators import (
     tournament_selection,
     roulette_selection,
     one_point_crossover,
@@ -27,7 +28,7 @@ def run_one(name: str, dataset_path: Path, n_colors: int, params: GAParams,
         w_conflict=1000.0,
         w_colors=1.0,
     )
-    res_out = {
+    return {
         "config": name,
         "dataset": dataset_path.name,
         "n_vertices": g.n_vertices,
@@ -38,25 +39,32 @@ def run_one(name: str, dataset_path: Path, n_colors: int, params: GAParams,
         "best_fitness": res["best_fitness"],
         "stopped_generation": res["stopped_generation"],
     }
-    return res_out
 
 def main():
-    dataset_path = Path("data/raw/queen7_7.col")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset", type=str, required=True, help="Path to .col dataset (e.g., data/raw/queen7_7.col)")
+    ap.add_argument("--k", type=int, required=True, help="Allowed number of colors")
+    ap.add_argument("--out", type=str, default="", help="Optional output CSV path")
+    ap.add_argument("--pop", type=int, default=300)
+    ap.add_argument("--gen", type=int, default=1500)
+    ap.add_argument("--elitism", type=int, default=2)
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--patience", type=int, default=200)
+    args = ap.parse_args()
 
-    # Cambia aquí el n_colors que quieras evaluar
-    n_colors = 9
+    dataset_path = Path(args.dataset)
+    n_colors = args.k
 
     params = GAParams(
-        population_size=300,
-        generations=1500,
-        elitism=2,
-        seed=0,
-        patience=200,
+        population_size=args.pop,
+        generations=args.gen,
+        elitism=args.elitism,
+        seed=args.seed,
+        patience=args.patience,
     )
 
     configs: List[Tuple[str, Callable, Callable, Callable]] = [
-        # 6 combinaciones (mínimas y defendibles)
-        ("tour + 1pt + reset", 
+        ("tour + 1pt + reset",
          lambda pop, fits: tournament_selection(pop, fits, k=3),
          lambda a, b: one_point_crossover(a, b, p=0.9),
          lambda ch: random_reset_mutation(ch, n_colors=n_colors, p_gene=0.02)),
@@ -103,7 +111,7 @@ def main():
         ))
 
     # save csv
-    out_path = Path("results/experiments_queen7_7.csv")
+    out_path = Path(args.out) if args.out else Path(f"results/experiments_{dataset_path.stem}_k{n_colors}.csv")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
