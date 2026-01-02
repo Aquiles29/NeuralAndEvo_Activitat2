@@ -1,0 +1,7 @@
+config,dataset,n_vertices,n_edges,allowed_colors,best_conflicts,best_colors_used,best_fitness,stopped_generation
+tour + 1pt + reset,queen7_7.col,49,476,9,1,9,1009.0,310
+tour + uniform + reset,queen7_7.col,49,476,9,1,9,1009.0,365
+tour + 1pt + swap,queen7_7.col,49,476,9,1,9,1009.0,344
+roulette + 1pt + reset,queen7_7.col,49,476,9,0,9,9.0,470
+roulette + uniform + swap,queen7_7.col,49,476,9,0,9,9.0,410
+roulette + uniform + reset,queen7_7.col,49,476,9,2,9,2009.0,555
