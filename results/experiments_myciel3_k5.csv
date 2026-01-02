@@ -1,0 +1,7 @@
+config,dataset,n_vertices,n_edges,allowed_colors,best_conflicts,best_colors_used,best_fitness,stopped_generation
+tour + 1pt + reset,myciel3.col,11,20,5,0,4,4.0,201
+tour + uniform + reset,myciel3.col,11,20,5,0,4,4.0,202
+tour + 1pt + swap,myciel3.col,11,20,5,0,4,4.0,202
+roulette + 1pt + reset,myciel3.col,11,20,5,0,4,4.0,201
+roulette + uniform + swap,myciel3.col,11,20,5,0,4,4.0,201
+roulette + uniform + reset,myciel3.col,11,20,5,0,4,4.0,201

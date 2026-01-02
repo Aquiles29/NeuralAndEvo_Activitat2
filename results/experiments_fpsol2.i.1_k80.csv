@@ -1,0 +1,7 @@
+config,dataset,n_vertices,n_edges,allowed_colors,best_conflicts,best_colors_used,best_fitness,stopped_generation
+tour + 1pt + reset,fpsol2.i.1.col,496,11654,80,19,80,19080.0,767
+tour + uniform + reset,fpsol2.i.1.col,496,11654,80,14,79,14079.0,675
+tour + 1pt + swap,fpsol2.i.1.col,496,11654,80,7,77,7077.0,880
+roulette + 1pt + reset,fpsol2.i.1.col,496,11654,80,39,80,39080.0,1314
+roulette + uniform + swap,fpsol2.i.1.col,496,11654,80,6,79,6079.0,840
+roulette + uniform + reset,fpsol2.i.1.col,496,11654,80,42,80,42080.0,1292
