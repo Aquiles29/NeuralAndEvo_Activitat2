@@ -5,9 +5,9 @@ from typing import Callable, List, Dict, Any, Tuple
 
 from ..graph import Graph
 from .representation import Chromosome, random_chromosome
-from .fitness import fitness, evaluate
+from .fitness import evaluate, score, fitness_scalar, Evaluation  # CHANGED
 
-SelectFn = Callable[[List[Chromosome], List[float]], Chromosome]
+SelectFn = Callable[[List[Chromosome], List[Tuple[int, int]]], Chromosome]  # CHANGED
 CrossoverFn = Callable[[Chromosome, Chromosome], Tuple[Chromosome, Chromosome]]
 MutateFn = Callable[[Chromosome], Chromosome]
 
@@ -17,18 +17,16 @@ class GAParams:
     generations: int = 300
     elitism: int = 2
     seed: int | None = 0
-    patience: int = 200  # parar si no mejora en N generaciones
-
+    patience: int = 200
 
 def run_ga(
     graph: Graph,
     n_colors: int,
-    select_fn: SelectFn,
+    select_fn: SelectFn,            # CHANGED: receives scores now
     crossover_fn: CrossoverFn,
     mutate_fn: MutateFn,
     params: GAParams,
-    w_conflict: float = 1000.0,
-    w_colors: float = 1.0,
+    penalty: int = 1000,            # NEW: only for plotting scalar
 ) -> Dict[str, Any]:
     if params.seed is not None:
         random.seed(params.seed)
@@ -38,41 +36,52 @@ def run_ga(
         random_chromosome(graph.n_vertices, n_colors) for _ in range(params.population_size)
     ]
 
+    # NEW: best is defined by lexicographic score
     best_ch: Chromosome | None = None
-    best_fit = float("inf")
-    history_best: List[float] = []
+    best_ev: Evaluation | None = None
+    best_score: Tuple[int, int] = (10**18, 10**18)  # large initial
 
-    # estacionario
+    # NEW: history for plots (scalar) + history for analysis (score)
+    history_best_scalar: List[float] = []
+    history_best_score: List[Tuple[int, int]] = []
+
+    # stationary tracking based on score (not scalar)
     no_improve = 0
     stopped_at = params.generations
 
     for gen in range(params.generations):
-        fits = [fitness(graph, ch, w_conflict=w_conflict, w_colors=w_colors) for ch in population]
+        # CHANGED: evaluate population explicitly
+        evaluations = [evaluate(graph, ch) for ch in population]
+        scores = [score(ev) for ev in evaluations]  # (conflicts, colors_used)
 
-        # update global best (minimización)
-        best_idx = min(range(len(population)), key=lambda i: fits[i])
-        if fits[best_idx] < best_fit:
-            best_fit = fits[best_idx]
+        # CHANGED: choose best in current population by lexicographic score
+        best_idx = min(range(len(population)), key=lambda i: scores[i])
+        if scores[best_idx] < best_score:
+            best_score = scores[best_idx]
             best_ch = population[best_idx][:]
+            best_ev = evaluations[best_idx]
             no_improve = 0
         else:
             no_improve += 1
 
-        history_best.append(best_fit)
+        # NEW: record history
+        history_best_score.append(best_score)
+        # scalar only for plot readability
+        history_best_scalar.append(fitness_scalar(best_ev if best_ev is not None else evaluations[best_idx], penalty=penalty))
 
         # stationary stop
         if no_improve >= params.patience:
             stopped_at = gen
             break
 
-        # elitism: carry best N from current population
-        elite_idxs = sorted(range(len(population)), key=lambda i: fits[i])[: params.elitism]
+        # CHANGED: elitism based on score (not scalar)
+        elite_idxs = sorted(range(len(population)), key=lambda i: scores[i])[: params.elitism]
         new_pop: List[Chromosome] = [population[i][:] for i in elite_idxs]
 
-        # rest by reproduction
+        # reproduction
         while len(new_pop) < params.population_size:
-            p1 = select_fn(population, fits)
-            p2 = select_fn(population, fits)
+            p1 = select_fn(population, scores)      # CHANGED: scores passed
+            p2 = select_fn(population, scores)
             c1, c2 = crossover_fn(p1, p2)
             c1 = mutate_fn(c1)
             c2 = mutate_fn(c2)
@@ -85,14 +94,22 @@ def run_ga(
 
     if best_ch is None:
         best_ch = population[0][:]
+        best_ev = evaluate(graph, best_ch)
+        best_score = score(best_ev)
 
-    best_eval = evaluate(graph, best_ch)
+    assert best_ev is not None
+
     return {
         "best_chromosome": best_ch,
-        "best_fitness": best_fit,
-        "best_conflicts": best_eval.conflicts,
-        "best_colors_used": best_eval.colors_used,
-        "history_best": history_best,
+        # NEW: explicit "best" definition
+        "best_score": best_score,  # (conflicts, colors_used)
+        "best_conflicts": best_ev.conflicts,
+        "best_colors_used": best_ev.colors_used,
+
+        # NEW: histories
+        "history_best_score": history_best_score,
+        "history_best_scalar": history_best_scalar,
+
         "stopped_generation": stopped_at,
         "no_improve_generations": no_improve,
     }

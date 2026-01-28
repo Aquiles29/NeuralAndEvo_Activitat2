@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Set
+from typing import Tuple
 
 from ..graph import Graph
 from .representation import Chromosome
@@ -18,11 +18,19 @@ def evaluate(graph: Graph, ch: Chromosome) -> Evaluation:
     colors_used = len(set(ch))
     return Evaluation(conflicts=conflicts, colors_used=colors_used)
 
-def fitness(graph: Graph, ch: Chromosome, w_conflict: float = 1000.0, w_colors: float = 1.0) -> float:
+# NEW: explicit comparison key (what "best" means)
+def score(ev: Evaluation) -> Tuple[int, int]:
     """
-    Minimization objective:
-      - heavily penalize conflicts (hard constraint)
-      - then minimize number of colors used (soft objective once conflicts are 0)
+    Lexicographic minimization:
+      1) minimize conflicts (feasibility)
+      2) among equal conflicts, minimize colors_used
     """
-    ev = evaluate(graph, ch)
-    return w_conflict * ev.conflicts + w_colors * ev.colors_used
+    return (ev.conflicts, ev.colors_used)
+
+# NEW: optional scalar ONLY for plotting (not for deciding best)
+def fitness_scalar(ev: Evaluation, penalty: int = 1000) -> float:
+    """
+    Only used to plot a single curve.
+    NOTE: The algorithm does NOT use this scalar to decide best solutions.
+    """
+    return float(ev.conflicts * penalty + ev.colors_used)
