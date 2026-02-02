@@ -18,7 +18,6 @@ def evaluate(graph: Graph, ch: Chromosome) -> Evaluation:
     colors_used = len(set(ch))
     return Evaluation(conflicts=conflicts, colors_used=colors_used)
 
-# NEW: explicit comparison key (what "best" means)
 def score(ev: Evaluation) -> Tuple[int, int]:
     """
     Lexicographic minimization:
@@ -27,10 +26,9 @@ def score(ev: Evaluation) -> Tuple[int, int]:
     """
     return (ev.conflicts, ev.colors_used)
 
-# NEW: optional scalar ONLY for plotting (not for deciding best)
 def fitness_scalar(ev: Evaluation, penalty: int = 1000) -> float:
     """
     Only used to plot a single curve.
-    NOTE: The algorithm does NOT use this scalar to decide best solutions.
+    The algorithm does NOT use this scalar to decide best solutions.
     """
     return float(ev.conflicts * penalty + ev.colors_used)
