@@ -11,6 +11,3 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Outputs
-results/*.png
-results/*.pdf
